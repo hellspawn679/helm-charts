@@ -27,7 +27,10 @@ jobs:
         uses: helm/chart-testing-action@v2.6.1
         with:
           version: v3.10.1
-
+      - name: what is changed
+        run: |
+          ct list-changed --config ct.yaml)
+  
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
