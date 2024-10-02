@@ -67,6 +67,7 @@ jobs:
       - name: Check if cert-manager is up
         run: |
           cmctl check api --wait=5m
-
+      - name: what is here
+        run: ls
       - name: Run chart-testing (install)
         run: ct install --config ct.yaml
