@@ -93,7 +93,11 @@ spec:
             failureThreshold: 5
             httpGet:
               path: /
+              {{- if .Values.v2.enabled }}
+              port: 13133
+              {{- else }}
               port: 14269
+              {{- end }}
               scheme: HTTP
             initialDelaySeconds: 5
             periodSeconds: 15
@@ -103,7 +107,11 @@ spec:
             failureThreshold: 3
             httpGet:
               path: /
+              {{- if .Values.v2.enabled }}
+              port: 13133
+              {{- else }}
               port: 14269
+              {{- end }}
               scheme: HTTP
             initialDelaySeconds: 1
             periodSeconds: 10
