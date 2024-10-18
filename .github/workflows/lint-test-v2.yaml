@@ -69,4 +69,4 @@ jobs:
           cmctl check api --wait=5m
 
       - name: Run chart-testing (install)
-        run: ct install --config ct-v2.yaml 
+        run: ct install --debug --config ct-v2.yaml 
