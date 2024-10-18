@@ -68,5 +68,25 @@ jobs:
         run: |
           cmctl check api --wait=5m
 
+      # Create custom values.yaml file step
+      - name: Create custom values.yaml
+        run: |
+          cat <<EOF > values.yaml
+          v2:
+            enabled: true
+          provisionDataStore:
+            cassandra: false
+          storage:
+            type: memory
+          allInOne:
+            enabled: true
+          agent:
+            enabled: false
+          collector:
+            enabled: false
+          query:
+            enabled: false
+          EOF
+
       - name: Run chart-testing (install)
-        run: ct install --debug --config ct-v2.yaml 
+        run: ct install --debug --config ct-v2.yaml --values values.yaml 
