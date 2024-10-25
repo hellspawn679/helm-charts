@@ -126,13 +126,59 @@ spec:
           protocol: TCP
         {{- end }}
         readinessProbe:
+          {{- if .Values.provisionDataStore.elasticsearch }}
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+            httpHeaders:
+              - name: Host
+                value: {{.Release.Name }}-elasticsearch
+          initialDelaySeconds: 90
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 10
+          {{- else }}
           httpGet:
             path: /
             port: admin
+          {{- end }}
         livenessProbe:
+          {{- if .Values.provisionDataStore.elasticsearch }}
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+            httpHeaders:
+              - name: Host
+                value: {{.Release.Name }}-elasticsearch
+          initialDelaySeconds: 90
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 10
+          {{- else }}
           httpGet:
             path: /
             port: admin
+          {{- end }}
+        {{- if .Values.provisionDataStore.elasticsearch }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+            httpHeaders:
+              - name: Host
+                value: {{.Release.Name }}-elasticsearch
+          initialDelaySeconds: 90   # Delay before first probe
+          periodSeconds: 10         # Frequency of probes
+          failureThreshold: 30      # Allows 5 minutes before restarting
+          httpGet:
+            path: /
+            port: admin
+        {{- end }}
         resources:
           {{- toYaml .Values.collector.resources | nindent 10 }}
         volumeMounts:

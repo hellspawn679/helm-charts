@@ -1,0 +1,782 @@
+---
+# Source: jaeger/charts/elasticsearch/templates/master/networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: release-name-elasticsearch-master
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/version: 8.13.2
+    helm.sh/chart: elasticsearch-20.0.4
+    app.kubernetes.io/component: master
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: elasticsearch
+      app.kubernetes.io/component: master
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+    - ports:
+        - port: 9200
+        - port: 9300
+---
+# Source: jaeger/charts/elasticsearch/templates/master/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-elasticsearch-master
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/version: 8.13.2
+    helm.sh/chart: elasticsearch-20.0.4
+    app.kubernetes.io/component: master
+automountServiceAccountToken: false
+---
+# Source: jaeger/templates/agent-sa.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-jaeger-agent
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: agent
+automountServiceAccountToken: false
+---
+# Source: jaeger/templates/collector-sa.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-jaeger-collector
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: collector
+automountServiceAccountToken: false
+---
+# Source: jaeger/templates/query-sa.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-jaeger-query
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: query
+automountServiceAccountToken: false
+---
+# Source: jaeger/charts/elasticsearch/templates/master/svc-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-elasticsearch-master-hl
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/version: 8.13.2
+    helm.sh/chart: elasticsearch-20.0.4
+    app.kubernetes.io/component: master
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: tcp-rest-api
+      port: 9200
+      targetPort: rest-api
+    - name: tcp-transport
+      port: 9300
+      targetPort: transport
+  selector:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/component: master
+---
+# Source: jaeger/charts/elasticsearch/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-elasticsearch
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/version: 8.13.2
+    helm.sh/chart: elasticsearch-20.0.4
+    app.kubernetes.io/component: master
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: tcp-rest-api
+      port: 9200
+      targetPort: rest-api
+      nodePort: null
+    - name: tcp-transport
+      port: 9300
+      nodePort: null
+  selector:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/component: master
+---
+# Source: jaeger/templates/agent-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-jaeger-agent
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: agent
+spec:
+  ports:
+  - name: zipkin-compact
+    port: 5775
+    protocol: UDP
+    targetPort: zipkin-compact
+  - name: jaeger-compact
+    port: 6831
+    protocol: UDP
+    targetPort: jaeger-compact
+  - name: jaeger-binary
+    port: 6832
+    protocol: UDP
+    targetPort: jaeger-binary
+  - name: http
+    port: 5778
+    protocol: TCP
+    targetPort: http
+  - name: admin
+    port: 14271
+    protocol: TCP
+    targetPort: admin
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: agent
+---
+# Source: jaeger/templates/collector-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-jaeger-collector
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: collector
+spec:
+  ports:
+  - name: grpc
+    port: 14250
+    protocol: TCP
+    targetPort: grpc
+    appProtocol: grpc
+  - name: http
+    port: 14268
+    protocol: TCP
+    targetPort: http
+    appProtocol: http
+  - name: admin
+    port: 14269
+    targetPort: admin
+  selector:
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: collector
+  type: ClusterIP
+---
+# Source: jaeger/templates/query-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-jaeger-query
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: query
+spec:
+  ports:
+  - name: query
+    port: 80
+    protocol: TCP
+    targetPort: query
+  - name: grpc
+    port: 16685
+    protocol: TCP
+    targetPort: grpc
+  - name: admin
+    port: 16687
+    protocol: TCP
+    targetPort: admin
+  selector:
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: query
+  type: ClusterIP
+---
+# Source: jaeger/templates/agent-ds.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: release-name-jaeger-agent
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: agent
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jaeger
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jaeger
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: agent
+    spec:
+      securityContext:
+        {}
+      dnsPolicy: ClusterFirst
+      serviceAccountName: release-name-jaeger-agent
+      
+      containers:
+      - name: release-name-jaeger-agent
+        securityContext:
+          {}
+        image: jaegertracing/jaeger-agent:1.53.0
+        imagePullPolicy: IfNotPresent
+        args:
+          
+          
+        env:
+          - name: REPORTER_GRPC_HOST_PORT
+            value: release-name-jaeger-collector:14250
+        ports:
+        - name: zipkin-compact
+          containerPort: 5775
+          protocol: UDP
+        - name: jaeger-compact
+          containerPort: 6831
+          protocol: UDP
+        - name: jaeger-binary
+          containerPort: 6832
+          protocol: UDP
+        - name: http
+          containerPort: 5778
+          protocol: TCP
+        - name: admin
+          containerPort: 14271
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: admin
+        readinessProbe:
+          httpGet:
+            path: /
+            port: admin
+        resources:
+          {}
+        volumeMounts:
+      volumes:
+---
+# Source: jaeger/templates/collector-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-jaeger-collector
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jaeger
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: collector
+  template:
+    metadata:
+      annotations:
+        checksum/config-env: 75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070
+      labels:
+        app.kubernetes.io/name: jaeger
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: collector
+    spec:
+      securityContext:
+        {}
+      serviceAccountName: release-name-jaeger-collector
+      
+      containers:
+      - name: release-name-jaeger-collector
+        securityContext:
+          {}
+        image: jaegertracing/jaeger-collector:1.53.0
+        imagePullPolicy: IfNotPresent
+        args:
+          
+          
+          
+        env:
+          - name: SPAN_STORAGE_TYPE
+            value: elasticsearch
+          - name: ES_SERVER_URLS
+            value: http://release-name-elasticsearch:9200
+          - name: ES_USERNAME
+            value: elastic
+          - name: ES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: release-name-jaeger-elasticsearch
+                key: password
+        ports:
+        - containerPort: 14250
+          name: grpc
+          protocol: TCP
+        - containerPort: 14268
+          name: http
+          protocol: TCP
+        - containerPort: 14269
+          name: admin
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+            httpHeaders:
+              - name: Host
+                value: release-name-elasticsearch
+          initialDelaySeconds: 90
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+            httpHeaders:
+              - name: Host
+                value: release-name-elasticsearch
+          initialDelaySeconds: 90
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 10
+        startupProbe:
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+            httpHeaders:
+              - name: Host
+                value: release-name-elasticsearch
+          initialDelaySeconds: 90   # Delay before first probe
+          periodSeconds: 10         # Frequency of probes
+          failureThreshold: 30      # Allows 5 minutes before restarting
+        resources:
+          {}
+        volumeMounts:
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+---
+# Source: jaeger/templates/query-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-jaeger-query
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: query
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jaeger
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: query
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jaeger
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: query
+    spec:
+      securityContext:
+        {}
+      serviceAccountName: release-name-jaeger-query
+       
+      containers:
+      - name: release-name-jaeger-query
+        securityContext:
+          {}
+        image: jaegertracing/jaeger-query:1.53.0
+        imagePullPolicy: IfNotPresent
+        args:
+          
+          
+          
+        env:
+          - name: SPAN_STORAGE_TYPE
+            value: elasticsearch
+          - name: ES_SERVER_URLS
+            value: http://release-name-elasticsearch:9200
+          - name: ES_USERNAME
+            value: elastic
+          - name: ES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: release-name-jaeger-elasticsearch
+                key: password
+          - name: QUERY_BASE_PATH
+            value: "/"
+          - name: JAEGER_AGENT_PORT
+            value: "6831"
+        ports:
+        - name: query
+          containerPort: 16686
+          protocol: TCP
+        - name: grpc
+          containerPort: 16685
+          protocol: TCP
+        - name: admin
+          containerPort: 16687
+          protocol: TCP
+        resources:
+          {}
+        volumeMounts:
+        livenessProbe:
+          httpGet:
+            path: /
+            port: admin
+        readinessProbe:
+          httpGet:
+            path: /
+            port: admin
+      - name: release-name-jaeger-agent-sidecar
+        securityContext:
+          {}
+        image: jaegertracing/jaeger-agent:1.53.0
+        imagePullPolicy: IfNotPresent
+        args:
+        env:
+        - name: REPORTER_GRPC_HOST_PORT
+          value: release-name-jaeger-collector:14250
+        ports:
+        - name: admin
+          containerPort: 14271
+          protocol: TCP
+        resources:
+          null
+        volumeMounts:
+        livenessProbe:
+          httpGet:
+            path: /
+            port: admin
+        readinessProbe:
+          httpGet:
+            path: /
+            port: admin
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+---
+# Source: jaeger/charts/elasticsearch/templates/master/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: release-name-elasticsearch-master
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/version: 8.13.2
+    helm.sh/chart: elasticsearch-20.0.4
+    app.kubernetes.io/component: master
+    ## Istio Labels: https://istio.io/docs/ops/deployment/requirements/
+    app: master
+spec:
+  replicas: 1
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/name: elasticsearch
+      app.kubernetes.io/component: master
+  serviceName: release-name-elasticsearch-master-hl
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: elasticsearch
+        app.kubernetes.io/version: 8.13.2
+        helm.sh/chart: elasticsearch-20.0.4
+        app.kubernetes.io/component: master
+        ## Istio Labels: https://istio.io/docs/ops/deployment/requirements/
+        app: master
+      annotations:
+    spec:
+      serviceAccountName: release-name-elasticsearch-master
+      
+      automountServiceAccountToken: false
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      initContainers:
+        ## Image that performs the sysctl operation to modify Kernel settings (needed sometimes to avoid boot errors)
+        - name: sysctl
+          image: docker.io/bitnami/os-shell:12-debian-12-r18
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              CURRENT=`sysctl -n vm.max_map_count`;
+              DESIRED="262144";
+              if [ "$DESIRED" -gt "$CURRENT" ]; then
+                  sysctl -w vm.max_map_count=262144;
+              fi;
+              CURRENT=`sysctl -n fs.file-max`;
+              DESIRED="65536";
+              if [ "$DESIRED" -gt "$CURRENT" ]; then
+                  sysctl -w fs.file-max=65536;
+              fi;
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          resources:
+            limits:
+              cpu: 150m
+              ephemeral-storage: 1024Mi
+              memory: 192Mi
+            requests:
+              cpu: 100m
+              ephemeral-storage: 50Mi
+              memory: 128Mi
+        - name: copy-default-plugins
+          image: docker.io/bitnami/elasticsearch:8.13.2-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 1024Mi
+              memory: 768Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 512Mi
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              #!/bin/bash
+
+              . /opt/bitnami/scripts/libfs.sh
+              . /opt/bitnami/scripts/elasticsearch-env.sh
+
+              if ! is_dir_empty "$DB_DEFAULT_PLUGINS_DIR"; then
+                  cp -nr "$DB_DEFAULT_PLUGINS_DIR"/* /plugins
+              fi
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: empty-dir
+              mountPath: /plugins
+              subPath: app-plugins-dir
+      containers:
+        - name: elasticsearch
+          image: docker.io/bitnami/elasticsearch:8.13.2-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ELASTICSEARCH_IS_DEDICATED_NODE
+              value: "no"
+            - name: ELASTICSEARCH_NODE_ROLES
+              value: "master"
+            - name: ELASTICSEARCH_TRANSPORT_PORT_NUMBER
+              value: "9300"
+            - name: ELASTICSEARCH_HTTP_PORT_NUMBER
+              value: "9200"
+            - name: ELASTICSEARCH_CLUSTER_NAME
+              value: "elastic"
+            
+            - name: ELASTICSEARCH_HEAP_SIZE
+              value: "128m"
+          ports:
+            - name: rest-api
+              containerPort: 9200
+            - name: transport
+              containerPort: 9300
+          livenessProbe:
+            failureThreshold: 5
+            initialDelaySeconds: 180
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            tcpSocket:
+              port: rest-api
+          readinessProbe:
+            failureThreshold: 5
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            exec:
+              command:
+                - /opt/bitnami/scripts/elasticsearch/healthcheck.sh
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 1024Mi
+              memory: 768Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 512Mi
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/elasticsearch/config
+              subPath: app-conf-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/elasticsearch/tmp
+              subPath: app-tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/elasticsearch/logs
+              subPath: app-logs-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/elasticsearch/plugins
+              subPath: app-plugins-dir
+            - name: data
+              mountPath: /bitnami/elasticsearch/data
+      volumes:
+        - name: empty-dir
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: "data"
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "8Gi"
+---
+# Source: jaeger/templates/elasticsearch-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: release-name-jaeger-elasticsearch
+  labels:
+    helm.sh/chart: jaeger-3.3.2
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.53.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/resource-policy": keep
+type: Opaque
+data:
+  password: "Y2hhbmdlbWU="
