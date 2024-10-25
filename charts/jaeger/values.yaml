@@ -330,16 +330,7 @@ schema:
 
 # For configurable values of the elasticsearch if provisioned, please see:
 # https://github.com/bitnami/charts/tree/main/bitnami/elasticsearch
-elasticsearch:
-    master:
-      masterOnly: false
-      replicaCount: 1
-    data:
-      replicaCount: 0
-    coordinating:
-      replicaCount: 0
-    ingest:
-      replicaCount: 0
+elasticsearch: {}
 
 # Example that uses no auth:
 # elasticsearch:
