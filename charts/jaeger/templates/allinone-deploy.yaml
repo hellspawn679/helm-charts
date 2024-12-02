@@ -54,10 +54,19 @@ spec:
         {{- end }}
           securityContext:
             {{- toYaml .Values.allInOne.securityContext | nindent 12 }}
+          {{- if not .Values.v2.enabled }}
           image: {{ include "allInOne.image" . }}
+          {{- end }}
+          {{- if .Values.v2.enabled }}
+          image: {{ .Values.v2.image }}
+          {{- end }}
           imagePullPolicy: {{ .Values.allInOne.image.pullPolicy }}
           name: jaeger
           args:
+          {{- if .Values.v2.enabled }}
+            - "--config"
+            - "/etc/jaeger/config.yaml"
+          {{- end -}}
             {{- range $arg := .Values.allInOne.args }}
             - "{{ tpl $arg $ }}"
             {{- end }}
@@ -80,6 +89,7 @@ spec:
               protocol: TCP
             - containerPort: 4318
               protocol: TCP
+          {{- if not .Values.v2.enabled }}
           livenessProbe:
             failureThreshold: 5
             httpGet:
@@ -100,11 +110,16 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
+          {{- end }}
       {{- with .Values.allInOne.resources }}
           resources:
         {{- toYaml . | nindent 12 }}
       {{- end }}
           volumeMounts:
+          {{- if .Values.v2.enabled }}
+            - name: jaeger-v2-config
+              mountPath: /etc/jaeger
+          {{- end }}
         {{- if not .Values.storage.badger.ephemeral }}
             - name: badger-data
               mountPath: {{ .Values.storage.badger.persistence.mountPath }}
@@ -123,6 +138,11 @@ spec:
         {{- toYaml .Values.allInOne.podSecurityContext | nindent 8 }}
       serviceAccountName: {{ template "jaeger.fullname" . }}
       volumes:
+    {{- if .Values.v2.enabled }}
+        - name: jaeger-v2-config
+          configMap:
+            name: {{ include "jaeger-v2.fullname" . }}
+    {{- end }}
     {{- if not .Values.storage.badger.ephemeral }}
         - name: badger-data
           persistentVolumeClaim:
